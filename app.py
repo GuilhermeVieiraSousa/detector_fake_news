@@ -1,10 +1,13 @@
-
 from flask import Flask, render_template, session, request, redirect, url_for
 # render_template renderizar html,
 # session criar sessão
 # request serve para a função saber se vai usar o método get ou post
 # redirect vai verificar se a sessão é válida
 # urk_for chama as funções definidas
+
+import pandas as pd
+import joblib
+
 from flask_mysqldb import MySQL 
 import MySQLdb.cursors 
 
@@ -23,9 +26,9 @@ app.secret_key = 'criar_Uma_Chave'
 mysql = MySQL(app)
 
 @app.route("/", methods=['POST', 'GET'])
-def home(): 
-  
-    return render_template("home.html"),200
+def home():  
+      
+    return render_template("home.html", usuario=session.get('nome')),200
 
 @app.route("/cadastro", methods=['POST', 'GET'])
 def cadastro():
@@ -70,10 +73,11 @@ def login():
         if account: # se existir 
             session['loggedin'] = True
             session['id'] = account['id_usuario'] 
-            session['nome'] = account['nome'] 
-            msg = 'Logged in successfully !'
-            usuario = session['nome']
-            return render_template('home.html', msg=msg, usuario=usuario) 
+            session['nome'] = account['nome']
+            session['email'] = account['email']
+            session['senha'] = account['senha']            
+            
+            return redirect(url_for('home'))
         else: 
             msg = 'Incorrect username / password !'
     return render_template('login.html', msg=msg)
@@ -85,6 +89,8 @@ def alterar():
         return render_template('home.html')
     #criando variáveis pelo form
     elif request.method == 'POST':
+        emailSession = session.get('email')
+        senhaSession = session.get('senha')
         emailAtual = request.form['emailAntigo'] 
         senhaAtual = request.form['senhaAntiga']
         emailSenha = request.form['emailSenha']
@@ -92,10 +98,8 @@ def alterar():
         senhaNova = request.form['senhaNova']
         #Conectando ao banco
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        if emailAtual and emailNovo and not senhaAtual or not senhaNova:
-            cursor.execute('SELECT * FROM usuario WHERE email = % s', (emailAtual, ))
-            account = cursor.fetchone() #capturando resultado
-            if account:                
+        if emailAtual and emailNovo and not senhaAtual or not senhaNova:            
+            if emailSession == emailAtual :                
                 cursor.execute('UPDATE usuario SET email = % s WHERE email= % s',(emailNovo, emailAtual))
                 mysql.connection.commit() #Registra o Update
                 msg = 'E-mail alterado com sucesso'
@@ -103,10 +107,8 @@ def alterar():
             else:
                 msg = 'E-mail não correspondente'
                 return render_template('alterar.html', msg=msg)
-        elif emailSenha and senhaAtual and senhaNova and not emailAtual or not emailNovo:
-            cursor.execute('SELECT * FROM usuario WHERE email = % s AND senha = % s', (emailSenha, senhaAtual ))
-            account = cursor.fetchone() #capturando resultado
-            if account:                
+        elif emailSenha and senhaAtual and senhaNova and not emailAtual or not emailNovo:            
+            if emailSession == emailSenha and senhaSession == senhaAtual:                
                 cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND senha = % s',(senhaNova, emailSenha, senhaAtual, ))
                 mysql.connection.commit() #Registra o Update
                 msg = 'Senha com sucesso'
@@ -124,14 +126,14 @@ def deletar():
         return render_template('home.html')
     #criando variáveis pelo form
     elif request.method == 'POST':
+        emailSession = session.get('email')
+        senhaSession = session.get('senha')
         email = request.form['emailDel'] 
         senha = request.form['senhaDel']
         #Conectando ao banco
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        #Verificando cadastro pelo e-mail e senha
-        cursor.execute('SELECT * FROM usuario WHERE email = % s AND senha = % s', (email, senha, )) 
-        account = cursor.fetchone()  #Capturando o primeiro resultado
-        if account: # se existir
+        
+        if emailSession == email and senhaSession == senha: # se existir
             #exluindo registro 
             cursor.execute('DELETE FROM usuario WHERE email = % s AND senha  = % s',(email, senha, ))
             mysql.connection.commit() #Registra o DELETE
@@ -140,6 +142,8 @@ def deletar():
             session.pop('loggedin', None) 
             session.pop('id', None) 
             session.pop('nome', None)
+            session.pop('email', None)
+            session.pop('senha', None)
             return render_template('home.html', msg=msg)
         else:          
             msg = 'Dados incorretos'
@@ -159,7 +163,26 @@ def historico():
 def sair_sessao():          
     session.pop('loggedin', None) 
     session.pop('id', None) 
-    session.pop('nome', None) 
+    session.pop('nome', None)
+    session.pop('email', None)
+    session.pop('senha', None)     
     return redirect(url_for('login'))
-            
+
+@app.route('/analisando', methods=[ 'POST', 'GET'])
+def analisando():
+
+    #carregando arquico pkl
+    analise = joblib.load("model_lr.pkl")
+
+    # Get values through input bars
+    noticia = request.form["areNoticia"]
+    
+    # Put inputs to dataframe
+    X = pd.DataFrame([noticia], columns = ["preprocessed_news"])
+        
+    # Get prediction
+    previsao = analise.predict(X)[0]      
+    
+   
+    return render_template('home.html', msg=previsao)
    

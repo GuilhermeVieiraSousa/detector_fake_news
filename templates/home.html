@@ -11,12 +11,18 @@
     
     <!--caso já exista sessão-->
     {% if session['id']  %}
-        <h1>{{msg}}</h1>
+        
         <h1>{{usuario}}</h1>
         <a href="{{url_for('alterar')}}"><input type="submit" value="alterar" /></a>
         <a href="{{url_for('historico')}}"><input type="submit" value="historico" /></a>
         <a href="{{url_for('deletar')}}"><input type="submit" value="deletar" /></a>
-        <a href="{{url_for('sair_sessao')}}"><input type="submit" value="sair" /></a>
+        <a href="{{url_for('sair_sessao')}}"><input type="submit" value="sair" /></a><br>
+        <form action="{{url_for('analisando')}}" method="POST">
+            <textarea name="areNoticia"></textarea><br>
+            <input type="submit" name="analisar" valeu="fdsfdsf"></input>
+            <h1>{{msg}}</h1>
+        </form>
+
     {% else %} <!--Caso não tenha sessão-->
         <a href="{{url_for('cadastro')}}"><input type="submit" value="cadastro" /></a>
         <a href="{{url_for('login')}}"><input type="submit" value="login" /></a> 
