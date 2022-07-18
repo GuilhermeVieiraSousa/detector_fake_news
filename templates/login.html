@@ -7,9 +7,9 @@
     <title>Login</title>
 </head>
 <body>
-    <form action="{{url_for('login')}}" method="post">
-        E-mail: <input type="email" name="emailLogin" /><br>
-        Senha: <input type="password" name="senhaLogin" /><br>
+    <form action="{{url_for('login')}}" method="post" >
+        E-mail: <input type="email" name="emailLogin" required/><br>
+        Senha: <input type="password" name="senhaLogin" required/><br>
         <input type="submit" name="login" value="Logar">
         <h1>{{msg}}</h1>
     </form>
