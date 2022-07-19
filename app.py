@@ -9,6 +9,8 @@ import pandas as pd
 import joblib
 import pickle
 
+from langdetect import detect #import para detecção da lígua do texto
+
 from flask_mysqldb import MySQL 
 import MySQLdb.cursors 
 
@@ -198,18 +200,31 @@ def sair_sessao():
 @app.route('/analisando', methods=[ 'POST', 'GET'])
 def analisando():
 
-    #carregando arquico pkl
-    analise = joblib.load("model_lr.pkl")
-    
+    #verificando lígua dp texto
+    texto = detect(request.form["areaNoticia"])
+    doc = texto  
+    #str(noticia)
+    if doc != 'pt':
+        msg='notícia não está em língua portuguesa poturguês e sim em lígua '+doc+', e é necessário que esteja em lígua portuguesa'
+        return render_template('home.html', msg=msg)
 
     # pegando valor pelo input
-    noticia = request.form["areaNoticia"]
+    noticia = request.form["areaNoticia"]    
+
+    #carregando arquico pkl
+    analise = joblib.load("model_lr.pkl")   
     
     # criando dataframe
     X = pd.DataFrame([[noticia]], columns = ["noticias"])
         
     # fazendo analise preditiva
-    previsao = analise.predict(X)[0]      
+    previsao = analise.predict(X)[0]
+
+    #Conectando ao banco
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    #Salvando no banco
+    cursor.execute('INSERT INTO noticia(id_usuario, noticia, resultado) VALUES (% s, % s, % s)', (session.get('id'), noticia, previsao, )) 
+    mysql.connection.commit() #gravando a informação no banco     
     
    
     return render_template('home.html', msg=previsao)
