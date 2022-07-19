@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cadastro.css')}}"  />
+    <title>Alterar</title>
+</head>
+<body>
+    <p>Alteração Senha</p>
+    <form method="post">       
+        Alterar a senha<br>
+        Digite o e-mail atual:<input type="email" id="emailSenha" name="emailSenha" /><br>
+        Digite a senha atual:<input type="password" id="senhaAntiga" name="senhaAntiga" /><br>
+        Digite a senha nova:<input type="password" id="senhaNova"name="senhaNova" pattern="[^\s]+$" title="Não é permitido espaços em branco"/><br>
+        <input type="submit" name="senhaAlterada" value="Alterar e-mail" /><br>
+        <script type="text/javascript" src="{{url_for('static', filename='javacript/alterar_senha.js')}}"></script>
+    </form>
+    <div id="mensagem">
+        <h3>A senha deve conter no mínimo os seguintes passos:</h3>
+        <p id="minuscsula" class="invalid">A <b>letra minúscula</b> letter</p>
+        <p id="maiuscula" class="invalid">A <b>letra maiúscula</b> letter</p>
+        <p id="numero" class="invalid">A <b>número</b></p>
+        <p id="tamanho" class="invalid">Minimum <b>8 characters</b></p>
+      </div>
+    <h1>{{msg}}</h1>
+</body>
+</html>

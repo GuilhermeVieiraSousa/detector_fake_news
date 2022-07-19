@@ -13,10 +13,12 @@
     <form action="{{url_for('cadastro')}}" method="POST"><br>
         Nome: <input type="text" id ="nomeCadastro"name="nomeCadastro" required/><br>
         E-mail: <input type="email" id="emailCadastro" name="emailCadastro" required/><br>
-        Senha: <input type="password" id="senhaCadastro" name="senhaCadastro" required/><br>
-        <input type="submit" name="btnCadastro" value="Cadastrar" />
+        Senha: <input type="password" id="senhaCadastro" name="senhaCadastro" required pattern="[^\s]+$" title="Não é permitido espaços em branco"/><br>
+        Repita a senha: <input type="password" id="senhaCadastroNovamente" name="senhaCadastroNovamente" required pattern="[^\s]+$" title="Não é permitido espaços em branco" /><br>
+        <input type="submit" name="btnCadastro" value="Cadastrar" /><br>           
         <script type="text/javascript" src="{{url_for('static', filename='javacript/cadastro.js')}}"></script>
     </form>
+    <a href="{{url_for('login')}}"><input type="submit" value="login" /></a>
     <div id="mensagem">
         <h3>A senha deve conter os seguintes passos:</h3>
         <p id="minuscsula" class="invalid">A <b>letra minúscula</b> letter</p>

@@ -39,7 +39,8 @@ def cadastro():
     elif request.method == 'POST':        
         #criando variáveis
         nome = request.form['nomeCadastro']
-        senha = request.form['senhaCadastro'] 
+        senha = request.form['senhaCadastro']
+        senhaNovamente = request.form['senhaCadastroNovamente'] 
         email = request.form['emailCadastro']
         #conectando ao banco
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -50,11 +51,12 @@ def cadastro():
             msg = 'E-mail já cadastrado !'
         elif re.match(r'[0-9]+', nome):
             msg='Nome de usuário não pode conter números'
-        elif not  re.match(r'[A-Za-z0-9]+', senha) :
-            msg='Senha não atende aos requisitos mínimos'       
-        
+        elif not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senha):
+            msg='Senha não atende aos requisitos mínimos'
         elif  len(senha) <8:
-            msg='Senha precisa ter 8 caracteres ou mais'        
+            msg='Senha precisa ter 8 caracteres ou mais'
+        elif senha != senhaNovamente:
+            msg = 'Senha diferentes digitadas'        
         else: 
             #executando comando de inserção
             cursor.execute('INSERT INTO usuario(nome, senha, email) VALUES (% s, % s, % s)', (nome, senha, email, )) 
@@ -85,49 +87,65 @@ def login():
             session['nome'] = account['nome']
             session['email'] = account['email']
             session['senha'] = account['senha']            
-            
             return redirect(url_for('home'))
         else: 
-            msg = 'Incorrect username / password !'
+            msg = 'E-mail/Senha não encontrados!'
     return render_template('login.html', msg=msg)
     
 
-@app.route("/alterar", methods=['POST', 'GET'])
-def alterar():
+@app.route("/alterarEmail", methods=['POST', 'GET'])
+def alterar_email():
+    if(not session):
+        return render_template('home.html')
+    #criando variáveis pelo form
+    elif request.method == 'POST':
+        emailSession = session.get('email')
+        emailAtual = request.form['emailAntigo']    
+        emailNovo = request.form['emailNovo']
+        #Conectando ao banco
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        if emailAtual and emailNovo:            
+            if emailSession == emailAtual :                
+                cursor.execute('UPDATE usuario SET email = % s WHERE email= % s',(emailNovo, emailAtual))
+                mysql.connection.commit() #Registra o Update
+                session['email'] = emailNovo  #atualizando a sessão
+                msg = 'E-mail alterado com sucesso'
+                return render_template('alterar_email.html', msg=msg)
+            else:
+                msg = 'E-mail não correspondente'
+                return render_template('alterar_email.html', msg=msg)                
+    return render_template("alterar_email.html")
+
+@app.route("/alterarSenha", methods=['POST', 'GET'])
+def alterar_senha():
     if(not session):
         return render_template('home.html')
     #criando variáveis pelo form
     elif request.method == 'POST':
         emailSession = session.get('email')
         senhaSession = session.get('senha')
-        emailAtual = request.form['emailAntigo'] 
         senhaAtual = request.form['senhaAntiga']
         emailSenha = request.form['emailSenha']
-        emailNovo = request.form['emailNovo']
         senhaNova = request.form['senhaNova']
         #Conectando ao banco
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        if emailAtual and emailNovo and not senhaAtual or not senhaNova:            
-            if emailSession == emailAtual :                
-                cursor.execute('UPDATE usuario SET email = % s WHERE email= % s',(emailNovo, emailAtual))
-                mysql.connection.commit() #Registra o Update
-                msg = 'E-mail alterado com sucesso'
-                return render_template('alterar.html', msg=msg)
-            else:
-                msg = 'E-mail não correspondente'
-                return render_template('alterar.html', msg=msg)
-        elif emailSenha and senhaAtual and senhaNova and not emailAtual or not emailNovo:            
-            if emailSession == emailSenha and senhaSession == senhaAtual:                
+        if emailSenha and senhaAtual and senhaNova:            
+            if emailSession == emailSenha and senhaSession == senhaAtual:
+                if not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senhaNova):
+                    msg='Senha não atende aos requisitos mínimos'     
+                    return render_template('alterar_senha.html', msg=msg)    
+                elif  len(senhaNova) <8:
+                    msg='Senha precisa ter 8 caracteres ou mais' 
+                    return render_template('alterar_senha.html', msg=msg)               
                 cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND senha = % s',(senhaNova, emailSenha, senhaAtual, ))
                 mysql.connection.commit() #Registra o Update
-                msg = 'Senha com sucesso'
-                return render_template('alterar.html', msg=msg)
+                session['senha'] = senhaNova #atualizando a sessão
+                msg = 'Senha alterada com sucesso'
+                return render_template('alterar_senha.html', msg=msg)
             else:
-                msg = 'Senha não correspondente'
-                return render_template('alterar.html', msg=msg)
-        msg = 'Campos faltantes ou para alterar o e-mail, digite apenas área "Alterar e-mail" e para senha digite apenas na área "Alterara senha" '
-        return render_template("alterar.html", msg)     
-    return render_template("alterar.html") 
+                msg = 'Senha ou E-mail não correspondente'
+                return render_template('alterar_senha.html', msg=msg)     
+    return render_template("alterar_senha.html") 
 
 @app.route("/deletar", methods=['POST', 'GET'])
 def deletar():
