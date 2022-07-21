@@ -8,5 +8,20 @@
 </head>
 <body>
     <p>Histórico</p>
+   
+    <table>
+        <tr>
+          <th>noticia</th>
+          <th>resultado</th>
+          <th>data da analise</th>
+        </tr>
+        <tr>
+            {%for linhas in resultado%}
+            <th>{{linhas.noticia}}</th>
+            <th>{{linhas.resultado}}</th>
+            <th>{{linhas.data_analise}}</th>            
+          </tr>        
+          {% endfor %}
+      </table>
 </body>
 </html>

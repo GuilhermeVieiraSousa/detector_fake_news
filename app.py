@@ -64,6 +64,7 @@ def cadastro():
             cursor.execute('INSERT INTO usuario(nome, senha, email) VALUES (% s, % s, % s)', (nome, senha, email, )) 
             mysql.connection.commit() #gravando a informação no banco
             msg = 'Conta registrada'
+            cursor.close() #fechando conexão
             return render_template('cadastro.html', msg=msg)  
     else:
         return render_template('cadastro.html', msg=msg)
@@ -88,7 +89,8 @@ def login():
             session['id'] = account['id_usuario'] 
             session['nome'] = account['nome']
             session['email'] = account['email']
-            session['senha'] = account['senha']            
+            session['senha'] = account['senha']
+            cursor.close() #fechando conexão            
             return redirect(url_for('home'))
         else: 
             msg = 'E-mail/Senha não encontrados!'
@@ -112,6 +114,7 @@ def alterar_email():
                 mysql.connection.commit() #Registra o Update
                 session['email'] = emailNovo  #atualizando a sessão
                 msg = 'E-mail alterado com sucesso'
+                cursor.close() #fechando conexão
                 return render_template('alterar_email.html', msg=msg)
             else:
                 msg = 'E-mail não correspondente'
@@ -143,6 +146,7 @@ def alterar_senha():
                 mysql.connection.commit() #Registra o Update
                 session['senha'] = senhaNova #atualizando a sessão
                 msg = 'Senha alterada com sucesso'
+                cursor.close() #fechando conexão
                 return render_template('alterar_senha.html', msg=msg)
             else:
                 msg = 'Senha ou E-mail não correspondente'
@@ -167,6 +171,7 @@ def deletar():
             cursor.execute('DELETE FROM usuario WHERE email = % s AND senha  = % s',(email, senha, ))
             mysql.connection.commit() #Registra o DELETE
             msg = 'Conta deletada com sucesso'
+            cursor.close() #fechando conexão
             #finalizando sessão
             session.pop('loggedin', None) 
             session.pop('id', None) 
@@ -183,7 +188,12 @@ def deletar():
 @app.route("/historico", methods=['POST', 'GET'])
 def historico():
     if(session):
-       return render_template("historico.html")
+        #Conectando ao banco
+       cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+       cursor.execute('SELECT noticia, resultado, data_analise FROM noticia')
+       resultado = cursor.fetchall()
+       cursor.close() #fechar conexão com o banco
+       return render_template("historico.html", resultado = resultado)
     return render_template("home.html")
 
 
