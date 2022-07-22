@@ -190,7 +190,8 @@ def historico():
     if(session):
         #Conectando ao banco
        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-       cursor.execute('SELECT noticia, resultado, data_analise FROM noticia')
+       id_usuario = session.get('id')
+       cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s',(id_usuario, ))
        resultado = cursor.fetchall()
        cursor.close() #fechar conexão com o banco
        return render_template("historico.html", resultado = resultado)
