@@ -4,24 +4,41 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--Booststrap-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     <title>Detecção</title>
 </head>
 <body>
-    <p>Detecção de notícia</p>
+
     
     <!--caso já exista sessão-->
     {% if session['id']  %}
-        
-        <h1>{{usuario}}</h1>
-        <a href="{{url_for('alterar_email')}}"><input type="submit" value="alterar e-mail" /></a>
-        <a href="{{url_for('alterar_senha')}}"><input type="submit" value="alterar senha" /></a>
-        <a href="{{url_for('historico')}}"><input type="submit" value="historico" /></a>
-        <a href="{{url_for('deletar')}}"><input type="submit" value="deletar" /></a>
-        <a href="{{url_for('sair_sessao')}}"><input type="submit" value="sair" /></a><br>
+
+    <ul class="nav nav-tabs " id="myTab" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="home-tab" href="{{url_for('historico')}}" role="tab" aria-controls="home" aria-selected="true">Detecção de notícia</a> 
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{usuario}}</a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{url_for('alterar_email')}}">Alterar E-mail</a>
+              <a class="dropdown-item" href="{{url_for('alterar_senha')}}">Alterar senha</a>
+              <a class="dropdown-item" href="{{url_for('deletar')}}">Deletar</a>
+        <li class="nav-item">
+          <a class="nav-link" id="contact-tab"  href="{{url_for('historico')}}" role="tab" aria-controls="contact" aria-selected="false">Histórico</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="contact-tab"  href="{{url_for('sair_sessao')}}" role="tab" aria-controls="contact" aria-selected="false">Sair</a>
+          </li>
+    </ul>
+
         <form action="{{url_for('analisando')}}" method="POST">
             <textarea name="areaNoticia"  required></textarea><br>
-            <input type="submit" name="analisar" ></input>
-            <h1>{{msg}}</h1>
+            <input type="submit" name="analisar" ></input>           
         </form>
 
     {% else %} <!--Caso não tenha sessão-->

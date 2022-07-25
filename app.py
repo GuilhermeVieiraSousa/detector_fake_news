@@ -115,11 +115,11 @@ def alterar_email():
                 session['email'] = emailNovo  #atualizando a sessão
                 msg = 'E-mail alterado com sucesso'
                 cursor.close() #fechando conexão
-                return render_template('alterar_email.html', msg=msg)
+                return render_template('alterar_email.html', msg=msg, usuario=session.get('nome'))
             else:
                 msg = 'E-mail não correspondente'
-                return render_template('alterar_email.html', msg=msg)                
-    return render_template("alterar_email.html")
+                return render_template('alterar_email.html', msg=msg, usuario=session.get('nome'))                
+    return render_template("alterar_email.html", usuario=session.get('nome'))
 
 @app.route("/alterarSenha", methods=['POST', 'GET'])
 def alterar_senha():
@@ -138,20 +138,20 @@ def alterar_senha():
             if emailSession == emailSenha and senhaSession == senhaAtual:
                 if not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senhaNova):
                     msg='Senha não atende aos requisitos mínimos'     
-                    return render_template('alterar_senha.html', msg=msg)    
+                    return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))    
                 elif  len(senhaNova) <8:
                     msg='Senha precisa ter 8 caracteres ou mais' 
-                    return render_template('alterar_senha.html', msg=msg)               
+                    return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))               
                 cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND senha = % s',(senhaNova, emailSenha, senhaAtual, ))
                 mysql.connection.commit() #Registra o Update
                 session['senha'] = senhaNova #atualizando a sessão
                 msg = 'Senha alterada com sucesso'
                 cursor.close() #fechando conexão
-                return render_template('alterar_senha.html', msg=msg)
+                return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))
             else:
                 msg = 'Senha ou E-mail não correspondente'
-                return render_template('alterar_senha.html', msg=msg)     
-    return render_template("alterar_senha.html") 
+                return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))     
+    return render_template("alterar_senha.html", usuario=session.get('nome')) 
 
 @app.route("/deletar", methods=['POST', 'GET'])
 def deletar():
@@ -178,11 +178,11 @@ def deletar():
             session.pop('nome', None)
             session.pop('email', None)
             session.pop('senha', None)
-            return render_template('home.html', msg=msg)
+            return render_template('home.html', msg=msg, usuario=session.get('nome'))
         else:          
             msg = 'Dados incorretos'
-            return render_template("deletar.html", msg=msg) 
-    return render_template("deletar.html")    
+            return render_template("deletar.html", msg=msg, usuario=session.get('nome')) 
+    return render_template("deletar.html", usuario=session.get('nome'))    
    
 
 @app.route("/historico", methods=['POST', 'GET'])
@@ -194,7 +194,7 @@ def historico():
        cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s',(id_usuario, ))
        resultado = cursor.fetchall()
        cursor.close() #fechar conexão com o banco
-       return render_template("historico.html", resultado = resultado)
+       return render_template("historico.html", resultado = resultado, usuario=session.get('nome'))
     return render_template("home.html")
 
 
@@ -216,7 +216,7 @@ def analisando():
     doc = texto  
     #str(noticia)
     if doc != 'pt':
-        msg='notícia não está em língua portuguesa poturguês e sim em lígua '+doc+', e é necessário que esteja em lígua portuguesa'
+        msg='notícia não está em língua portuguesa e sim em lígua '+doc+', e é necessário que esteja em lígua portuguesa'
         return render_template('home.html', msg=msg)
 
     # pegando valor pelo input
@@ -234,9 +234,9 @@ def analisando():
     #Conectando ao banco
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     #Salvando no banco
-    cursor.execute('INSERT INTO noticia(id_usuario, noticia, resultado) VALUES (% s, % s, % s)', (session.get('id'), noticia, previsao, )) 
+    cursor.execute('INSERT INTO noticia(id_usuario, noticia, resultado) VALUES (% s, % s, % s) ORDER BY data_analise desc', (session.get('id'), noticia, previsao, )) 
     mysql.connection.commit() #gravando a informação no banco     
-    
+    cursor.close() #fechar conexão com o banco
    
-    return render_template('home.html', msg=previsao)
+    return render_template('home.html', msg=previsao, usuario=session.get('nome'))
    
