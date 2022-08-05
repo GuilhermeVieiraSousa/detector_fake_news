@@ -7,15 +7,35 @@ from flask import Flask, render_template, session, request, redirect, url_for
 import re #expressão regular
 import pandas as pd
 import joblib
-import pickle
 
-from langdetect import detect #import para detecção da lígua do texto
-
+#import para detecção da lígua do texto
+from langdetect import detect 
+#Conexão ao banco
 from flask_mysqldb import MySQL 
 import MySQLdb.cursors 
 
+#import para tratamento de dados
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from sklearn.feature_extraction.text import TfidfVectorizer
+import tensorflow as tf
+from tensorflow import keras
+import missingno as msno
+
+# preparando os dados para o modelo
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+import numpy as np
+
+
 
 app = Flask(__name__)
+
+#download stopwords
+nltk.download("stopwords")
+
+stopwords = set(stopwords.words('portuguese'))
 
 #dados do banco
 app.config['MYSQL_HOST'] = 'localhost'
@@ -219,17 +239,41 @@ def analisando():
         msg='notícia não está em língua portuguesa e sim em lígua '+doc+', e é necessário que esteja em lígua portuguesa'
         return render_template('home.html', msg=msg)
 
-    # pegando valor pelo input
-    noticia = request.form["areaNoticia"]    
-
     #carregando arquico pkl
     analise = joblib.load("model_lr.pkl")   
+
+    # pegando valor pelo input
+    noticia = request.form["areaNoticia"]   
+
     
     # criando dataframe
-    X = pd.DataFrame([[noticia]], columns = ["noticias"])
+    dataFrameParaAnalise = pd.DataFrame([[noticia]], columns = ["preprocessed_news"])
+
+    stemmer = PorterStemmer()
+
+    # Separa a frase em uma lista de sentencas.
+    dataFrameParaAnalise['separado'] = dataFrameParaAnalise['preprocessed_news'].str.split()
+
+    # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
+    dataFrameParaAnalise['separado'] = dataFrameParaAnalise['separado'].apply(lambda x: [re.sub(r"[^A-Za-z]", " ", y) for y in x])
+
+    # Aplica o porter stemmer nessas palavras
+    dataFrameParaAnalise['stemmed'] = dataFrameParaAnalise['separado'].apply(lambda x: [stemmer.stem(y) for y in x if not y in stopwords])
+
+    # Exclui stopwords.
+    dataFrameParaAnalise['stemmed_stopwords'] = dataFrameParaAnalise["stemmed"].apply(lambda x: [item for item in x if item not in stopwords])
+
+    # deixando novamente em frases
+    dataFrameParaAnalise["features"] = dataFrameParaAnalise['stemmed_stopwords'].apply(lambda x: ' '.join(x))
+
+     #criando novo dataframe para analise
+    df_analise = dataFrameParaAnalise[["features"]]
+   
+  
+
         
     # fazendo analise preditiva
-    previsao = analise.predict(X)[0]
+    previsao = analise.predict(df_analise)[0]
 
     #Conectando ao banco
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)

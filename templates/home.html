@@ -40,6 +40,7 @@
             <textarea name="areaNoticia"  required></textarea><br>
             <input type="submit" name="analisar" ></input>           
         </form>
+        {{msg}}
 
     {% else %} <!--Caso não tenha sessão-->
         <a href="{{url_for('cadastro')}}"><input type="submit" value="cadastro" /></a>
