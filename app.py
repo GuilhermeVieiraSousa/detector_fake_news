@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, session, request, redirect, url_for
 # render_template renderizar html,
 # session criar sessão
@@ -30,8 +31,10 @@ import numpy as np
 
 
 
-app = Flask(__name__)
 
+
+app = Flask(__name__)
+ 
 #download stopwords
 nltk.download("stopwords")
 
@@ -208,7 +211,7 @@ def deletar():
 @app.route("/historico", methods=['POST', 'GET'])
 def historico():
     if(session):
-        #Conectando ao banco
+      #Conectando ao banco
        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
        id_usuario = session.get('id')
        cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s',(id_usuario, ))
@@ -225,8 +228,43 @@ def sair_sessao():
     session.pop('id', None) 
     session.pop('nome', None)
     session.pop('email', None)
-    session.pop('senha', None)     
+    session.pop('senha', None)
+    session.pop('idEnvio', None)
+    session.pop('email', None)     
     return redirect(url_for('login'))
+
+@app.route('/esqueceu_senha', methods=['POST', 'GET'])
+def esqueceu_senha():     
+    if(session):
+        return redirect(url_for('home'))
+    if request.method == 'POST':
+        #capturando dados do form
+        emailCadastrado = request.form['emailCadastrado']
+        nomeCadastrado = request.form['nomeCadastrado']
+        senhaNovaCadastrada = request.form['senhaNovaCadastrada']
+        #Conectando ao banco
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        #Verificando cadastro pelo e-mail e senha
+        cursor.execute('SELECT * FROM usuario WHERE email = % s AND nome = % s', (emailCadastrado, nomeCadastrado )) 
+        account = cursor.fetchone()  #Capturando o primeiro resultado
+        if account: # se existir 
+            if not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senhaNovaCadastrada):
+                    msg='Senha não atende aos requisitos mínimos'     
+                    return render_template('esqueceu_senha.html', msg=msg)    
+            elif  len(senhaNovaCadastrada) <8:
+                    msg='Senha precisa ter 8 caracteres ou mais' 
+                    return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))               
+            cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND nome = % s',(senhaNovaCadastrada, emailCadastrado, nomeCadastrado, ))
+            mysql.connection.commit() #Registra o Update
+            msg = 'Senha nova cadastrada com sucesso'
+            cursor.close() #fechando conexão
+            return render_template('esqueceu_senha.html', msg=msg)             
+        else: 
+            msg = 'Nenhuma encontrada com esse nome e e-mail'
+            return render_template('esqueceu_senha.html', msg=msg)
+    return render_template('esqueceu_senha.html')
+        
+    
 
 @app.route('/analisando', methods=[ 'POST', 'GET'])
 def analisando():
@@ -243,9 +281,8 @@ def analisando():
     analise = joblib.load("model_lr.pkl")   
 
     # pegando valor pelo input
-    noticia = request.form["areaNoticia"]   
+    noticia = request.form["areaNoticia"]  
 
-    
     # criando dataframe
     dataFrameParaAnalise = pd.DataFrame([[noticia]], columns = ["preprocessed_news"])
 
@@ -264,16 +301,15 @@ def analisando():
     dataFrameParaAnalise['stemmed_stopwords'] = dataFrameParaAnalise["stemmed"].apply(lambda x: [item for item in x if item not in stopwords])
 
     # deixando novamente em frases
-    dataFrameParaAnalise["features"] = dataFrameParaAnalise['stemmed_stopwords'].apply(lambda x: ' '.join(x))
+    dataFrameParaAnalise["preprocessed_news"] = dataFrameParaAnalise['stemmed_stopwords'].apply(lambda x: ' '.join(x))
 
      #criando novo dataframe para analise
-    df_analise = dataFrameParaAnalise[["features"]]
-   
-  
+    df_analise = dataFrameParaAnalise[["preprocessed_news"]]
 
-        
+    X = pd.DataFrame([[df_analise]], columns = ["preprocessed_news"])
+
     # fazendo analise preditiva
-    previsao = analise.predict(df_analise)[0]
+    previsao = analise.predict(X)[0]
 
     #Conectando ao banco
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
