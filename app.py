@@ -7,7 +7,10 @@ from flask import Flask, render_template, session, request, redirect, url_for
 # urk_for chama as funções definidas
 import re #expressão regular
 import pandas as pd
-import joblib
+import pickle
+
+
+
 
 #import para detecção da lígua do texto
 from langdetect import detect 
@@ -19,14 +22,9 @@ import MySQLdb.cursors
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-from sklearn.feature_extraction.text import TfidfVectorizer
-import tensorflow as tf
-from tensorflow import keras
-import missingno as msno
 
-# preparando os dados para o modelo
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+
 import numpy as np
 
 
@@ -47,6 +45,12 @@ app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'detectorFakeNews'
 
 app.secret_key = 'criar_Uma_Chave'
+
+
+# Load model and vectorizer
+model = pickle.load(open('model2.pkl', 'rb'))
+tfidfvect = pickle.load(open('tfidfvect2.pkl', 'rb'))
+ps = PorterStemmer()
 
 
 mysql = MySQL(app)
@@ -263,53 +267,41 @@ def esqueceu_senha():
             msg = 'Nenhuma encontrada com esse nome e e-mail'
             return render_template('esqueceu_senha.html', msg=msg)
     return render_template('esqueceu_senha.html')
-        
-    
 
+
+
+#preprpocessamento e predição do texto
+def predicao(text):
+    portugues = nltk.corpus.stopwords.words('portuguese')
+    preprocessando = re.sub('[^a-zA-Z]', ' ', text) # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
+    preprocessando = preprocessando.lower() # deixando tudo em minúcuslo
+    preprocessando = preprocessando.split() # Separa a frase em uma lista de sentencas. 
+    preprocessando = [ps.stem(word) for word in preprocessando if not word in portugues ] # retirando stopwords
+    preprocessando = ' '.join(preprocessando) # deixando novamente em frases
+    preprocessando_vect = tfidfvect.transform([preprocessando]).toarray()
+    predicao = 'FAKE' if model.predict(preprocessando_vect) == 'fake' else 'TRUE'
+    return predicao  
+
+#identificando a lingua
+def idioma(texto):
+    analise = detect(texto)
+    result = analise
+    if result != 'pt':
+        return True
+    return False      
+    
 @app.route('/analisando', methods=[ 'POST', 'GET'])
 def analisando():
 
-    #verificando lígua dp texto
-    texto = detect(request.form["areaNoticia"])
-    doc = texto  
-    #str(noticia)
-    if doc != 'pt':
-        msg='notícia não está em língua portuguesa e sim em lígua '+doc+', e é necessário que esteja em lígua portuguesa'
+    # Pegando o texto dos forms
+    noticia = request.form["areaNoticia"] 
+    
+    if idioma(noticia):
+        msg='notícia não está em língua portuguesa'
         return render_template('home.html', msg=msg)
 
-    #carregando arquico pkl
-    analise = joblib.load("model_lr.pkl")   
-
-    # pegando valor pelo input
-    noticia = request.form["areaNoticia"]  
-
-    # criando dataframe
-    dataFrameParaAnalise = pd.DataFrame([[noticia]], columns = ["preprocessed_news"])
-
-    stemmer = PorterStemmer()
-
-    # Separa a frase em uma lista de sentencas.
-    dataFrameParaAnalise['separado'] = dataFrameParaAnalise['preprocessed_news'].str.split()
-
-    # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
-    dataFrameParaAnalise['separado'] = dataFrameParaAnalise['separado'].apply(lambda x: [re.sub(r"[^A-Za-z]", " ", y) for y in x])
-
-    # Aplica o porter stemmer nessas palavras
-    dataFrameParaAnalise['stemmed'] = dataFrameParaAnalise['separado'].apply(lambda x: [stemmer.stem(y) for y in x if not y in stopwords])
-
-    # Exclui stopwords.
-    dataFrameParaAnalise['stemmed_stopwords'] = dataFrameParaAnalise["stemmed"].apply(lambda x: [item for item in x if item not in stopwords])
-
-    # deixando novamente em frases
-    dataFrameParaAnalise["preprocessed_news"] = dataFrameParaAnalise['stemmed_stopwords'].apply(lambda x: ' '.join(x))
-
-     #criando novo dataframe para analise
-    df_analise = dataFrameParaAnalise[["preprocessed_news"]]
-
-    X = pd.DataFrame([[df_analise]], columns = ["preprocessed_news"])
-
-    # fazendo analise preditiva
-    previsao = analise.predict(X)[0]
+    # Fazendo previsão do texto 
+    previsao = predicao(noticia)
 
     #Conectando ao banco
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -319,4 +311,4 @@ def analisando():
     cursor.close() #fechar conexão com o banco
    
     return render_template('home.html', msg=previsao, usuario=session.get('nome'))
-   
+    
