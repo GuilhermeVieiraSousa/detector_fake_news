@@ -8,12 +8,11 @@ from flask import Flask, render_template, session, request, redirect, url_for
 import re #expressão regular
 import pandas as pd
 import pickle
-
-
-
-
 #import para detecção da lígua do texto
 from langdetect import detect 
+#importe para retirar a acentuação das palavras
+# usar antes pip install unidecode
+import unidecode 
 #Conexão ao banco
 from flask_mysqldb import MySQL 
 import MySQLdb.cursors 
@@ -22,8 +21,6 @@ import MySQLdb.cursors
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-
-
 
 import numpy as np
 
@@ -218,7 +215,7 @@ def historico():
       #Conectando ao banco
        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
        id_usuario = session.get('id')
-       cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s',(id_usuario, ))
+       cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s ORDER BY data_analise desc',(id_usuario, ))
        resultado = cursor.fetchall()
        cursor.close() #fechar conexão com o banco
        return render_template("historico.html", resultado = resultado, usuario=session.get('nome'))
@@ -273,7 +270,8 @@ def esqueceu_senha():
 #preprpocessamento e predição do texto
 def predicao(text):
     portugues = nltk.corpus.stopwords.words('portuguese')
-    preprocessando = re.sub('[^a-zA-Z]', ' ', text) # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
+    preprocessando = unidecode.unidecode(text) 
+    preprocessando = re.sub('[^a-zA-Z]', ' ', preprocessando) # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
     preprocessando = preprocessando.lower() # deixando tudo em minúcuslo
     preprocessando = preprocessando.split() # Separa a frase em uma lista de sentencas. 
     preprocessando = [ps.stem(word) for word in preprocessando if not word in portugues ] # retirando stopwords
