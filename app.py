@@ -6,7 +6,7 @@ from flask import Flask, render_template, session, request, redirect, url_for
 # redirect vai verificar se a sessão é válida
 # urk_for chama as funções definidas
 import re #expressão regular
-import pandas as pd
+
 import pickle
 #import para detecção da lígua do texto
 from langdetect import detect 
@@ -21,12 +21,6 @@ import MySQLdb.cursors
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-
-import numpy as np
-
-
-
-
 
 app = Flask(__name__)
  
@@ -68,30 +62,18 @@ def cadastro():
         senha = request.form['senhaCadastro']
         senhaNovamente = request.form['senhaCadastroNovamente'] 
         email = request.form['emailCadastro']
-        #conectando ao banco
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        #verificando se usuário já existe
-        cursor.execute('SELECT * FROM usuario WHERE email = % s', (email, ))
-        account = cursor.fetchone() #guarda resultado encontrado
-        if account: #caso já exista o cadastro do e-mail
-            msg = 'E-mail já cadastrado !'
-        elif re.match(r'[0-9]+', nome):
+        if verificaCadastro(email):
+            msg="E-mail já cadastrado"
+        elif validaçãoNome(nome)==False:
             msg='Nome de usuário não pode conter números'
-        elif not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senha):
+        elif validacaoSenha(senha)==False:
             msg='Senha não atende aos requisitos mínimos'
-        elif  len(senha) <8:
-            msg='Senha precisa ter 8 caracteres ou mais'
         elif senha != senhaNovamente:
             msg = 'Senha diferentes digitadas'        
         else: 
-            #executando comando de inserção
-            cursor.execute('INSERT INTO usuario(nome, senha, email) VALUES (% s, % s, % s)', (nome, senha, email, )) 
-            mysql.connection.commit() #gravando a informação no banco
-            msg = 'Conta registrada'
-            cursor.close() #fechando conexão
-            return render_template('cadastro.html', msg=msg)  
-    else:
-        return render_template('cadastro.html', msg=msg)
+            cadastrado(nome, email, senha)
+            msg = 'Conta registrada'          
+            return render_template('cadastro.html', msg=msg)      
     return render_template('cadastro.html', msg=msg) 
     
 @app.route("/login", methods=['POST', 'GET'])
@@ -103,21 +85,10 @@ def login():
         #criando variáveis pelo form 
         email = request.form['emailLogin'] 
         senha = request.form['senhaLogin']
-        #Conectando ao banco
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        #Verificando cadastro pelo e-mail e senha
-        cursor.execute('SELECT * FROM usuario WHERE email = % s AND senha = % s', (email, senha, )) 
-        account = cursor.fetchone()  #Capturando o primeiro resultado
-        if account: # se existir 
-            session['loggedin'] = True
-            session['id'] = account['id_usuario'] 
-            session['nome'] = account['nome']
-            session['email'] = account['email']
-            session['senha'] = account['senha']
-            cursor.close() #fechando conexão            
-            return redirect(url_for('home'))
+        if login(email, senha):
+            return redirect(url_for('home'))       
         else: 
-            msg = 'E-mail/Senha não encontrados!'
+           msg = 'E-mail/Senha não encontrados!'
     return render_template('login.html', msg=msg)
     
 
@@ -132,13 +103,9 @@ def alterar_email():
         emailNovo = request.form['emailNovo']
         #Conectando ao banco
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        if emailAtual and emailNovo:            
-            if emailSession == emailAtual :                
-                cursor.execute('UPDATE usuario SET email = % s WHERE email= % s',(emailNovo, emailAtual))
-                mysql.connection.commit() #Registra o Update
-                session['email'] = emailNovo  #atualizando a sessão
+        if emailAtual and emailNovo: #verifica se os campos foram digitados           
+            if alterarEmail(emailSession, emailAtual, emailNovo):
                 msg = 'E-mail alterado com sucesso'
-                cursor.close() #fechando conexão
                 return render_template('alterar_email.html', msg=msg, usuario=session.get('nome'))
             else:
                 msg = 'E-mail não correspondente'
@@ -155,22 +122,10 @@ def alterar_senha():
         senhaSession = session.get('senha')
         senhaAtual = request.form['senhaAntiga']
         emailSenha = request.form['emailSenha']
-        senhaNova = request.form['senhaNova']
-        #Conectando ao banco
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        if emailSenha and senhaAtual and senhaNova:            
-            if emailSession == emailSenha and senhaSession == senhaAtual:
-                if not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senhaNova):
-                    msg='Senha não atende aos requisitos mínimos'     
-                    return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))    
-                elif  len(senhaNova) <8:
-                    msg='Senha precisa ter 8 caracteres ou mais' 
-                    return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))               
-                cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND senha = % s',(senhaNova, emailSenha, senhaAtual, ))
-                mysql.connection.commit() #Registra o Update
-                session['senha'] = senhaNova #atualizando a sessão
-                msg = 'Senha alterada com sucesso'
-                cursor.close() #fechando conexão
+        senhaNova = request.form['senhaNova']        
+        if emailSenha and senhaAtual and senhaNova:  #verifica se ps campos foram digitados          
+            if(alteraSenha(emailSession,  emailSenha, senhaSession, senhaAtual, senhaNova)):
+                msg = 'Senha alterada com sucesso'            
                 return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))
             else:
                 msg = 'Senha ou E-mail não correspondente'
@@ -187,21 +142,8 @@ def deletar():
         senhaSession = session.get('senha')
         email = request.form['emailDel'] 
         senha = request.form['senhaDel']
-        #Conectando ao banco
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        if emailSession == email and senhaSession == senha: # se existir
-            #exluindo registro 
-            cursor.execute('DELETE FROM usuario WHERE email = % s AND senha  = % s',(email, senha, ))
-            mysql.connection.commit() #Registra o DELETE
-            msg = 'Conta deletada com sucesso'
-            cursor.close() #fechando conexão
-            #finalizando sessão
-            session.pop('loggedin', None) 
-            session.pop('id', None) 
-            session.pop('nome', None)
-            session.pop('email', None)
-            session.pop('senha', None)
+        if deletar(emailSession, email, senhaSession, senha): # se existir           
+            msg = 'Conta deletada com sucesso'            
             return render_template('home.html', msg=msg, usuario=session.get('nome'))
         else:          
             msg = 'Dados incorretos'
@@ -212,17 +154,11 @@ def deletar():
 @app.route("/historico", methods=['POST', 'GET'])
 def historico():
     if(session):
-      #Conectando ao banco
-       cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-       id_usuario = session.get('id')
-       cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s ORDER BY data_analise desc',(id_usuario, ))
-       resultado = cursor.fetchall()
-       cursor.close() #fechar conexão com o banco
-       return render_template("historico.html", resultado = resultado, usuario=session.get('nome'))
+        return historico()
     return render_template("home.html")
 
 
-#rota de teste para sair da ssessão
+
 @app.route('/sair', methods=['POST', 'GET'])
 def sair_sessao():          
     session.pop('loggedin', None) 
@@ -249,12 +185,10 @@ def esqueceu_senha():
         cursor.execute('SELECT * FROM usuario WHERE email = % s AND nome = % s', (emailCadastrado, nomeCadastrado )) 
         account = cursor.fetchone()  #Capturando o primeiro resultado
         if account: # se existir 
-            if not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senhaNovaCadastrada):
-                    msg='Senha não atende aos requisitos mínimos'     
-                    return render_template('esqueceu_senha.html', msg=msg)    
-            elif  len(senhaNovaCadastrada) <8:
-                    msg='Senha precisa ter 8 caracteres ou mais' 
-                    return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))               
+            if validacaoSenha(senhaNovaCadastrada)==False:
+                msg="Senha não atende os requisitos mínimos"
+                cursor.close() #fechando conexão
+                return render_template('alterar_senha.html', msg=msg, usuario=session.get('nome'))               
             cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND nome = % s',(senhaNovaCadastrada, emailCadastrado, nomeCadastrado, ))
             mysql.connection.commit() #Registra o Update
             msg = 'Senha nova cadastrada com sucesso'
@@ -264,29 +198,6 @@ def esqueceu_senha():
             msg = 'Nenhuma encontrada com esse nome e e-mail'
             return render_template('esqueceu_senha.html', msg=msg)
     return render_template('esqueceu_senha.html')
-
-
-
-#preprpocessamento e predição do texto
-def predicao(text):
-    portugues = nltk.corpus.stopwords.words('portuguese')
-    preprocessando = unidecode.unidecode(text) 
-    preprocessando = re.sub('[^a-zA-Z]', ' ', preprocessando) # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
-    preprocessando = preprocessando.lower() # deixando tudo em minúcuslo
-    preprocessando = preprocessando.split() # Separa a frase em uma lista de sentencas. 
-    preprocessando = [ps.stem(word) for word in preprocessando if not word in portugues ] # retirando stopwords
-    preprocessando = ' '.join(preprocessando) # deixando novamente em frases
-    preprocessando_vect = tfidfvect.transform([preprocessando]).toarray()
-    predicao = 'FAKE' if model.predict(preprocessando_vect) == 'fake' else 'TRUE'
-    return predicao  
-
-#identificando a lingua
-def idioma(texto):
-    analise = detect(texto)
-    result = analise
-    if result != 'pt':
-        return True
-    return False      
     
 @app.route('/analisando', methods=[ 'POST', 'GET'])
 def analisando():
@@ -309,4 +220,135 @@ def analisando():
     cursor.close() #fechar conexão com o banco
    
     return render_template('home.html', msg=previsao, usuario=session.get('nome'))
+
+################ Funções para validação de campos
+
+#preprpocessamento e predição do texto
+def predicao(text):
+    portugues = nltk.corpus.stopwords.words('portuguese')
+    preprocessando = unidecode.unidecode(text) 
+    preprocessando = re.sub('[^a-zA-Z]', ' ', preprocessando) # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
+    preprocessando = preprocessando.lower() # deixando tudo em minúcuslo
+    preprocessando = preprocessando.split() # Separa a frase em uma lista de sentencas. 
+    preprocessando = [ps.stem(word) for word in preprocessando if not word in portugues ] # retirando stopwords
+    preprocessando = ' '.join(preprocessando) # deixando novamente em frases
+    preprocessando_vect = tfidfvect.transform([preprocessando]).toarray()
+    predicao = 'FAKE' if model.predict(preprocessando_vect) == 'fake' else 'TRUE'
+    return predicao  
+
+#identificando a lingua e só permitindo texto em língua portuguesa
+def idioma(texto):
+    analise = detect(texto)
+    result = analise
+    if result != 'pt':
+        return True
+    return False      
+
+#Verifica se atendo todos os requisitor(letras maiúsculas e minúsculas, tenha números e pelo menos 8 caracteres)
+def validacaoSenha(senha):
+    if not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senha):    
+        return False    
+    elif  len(senha) <8:
+       return False
+    return True  
+
+#Não permite nome que tenha números 
+def validaçãoNome(nome):
+    if re.match(r'[0-9]+', nome):
+        return False
+    return True    
+
+
+
+################## FUNÇÕES PARA COMANDO NO BANCO DE DADOS
+
+
+def verificaCadastro(email):
+    #conectando ao banco
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    #verificando se usuário já existe
+    cursor.execute('SELECT * FROM usuario WHERE email = % s', (email, ))
+    account = cursor.fetchone() #guarda resultado encontrado
+    if account: #caso já exista o cadastro do e-mail
+        cursor.close() #fechar conexão com o banco
+        return True
+    cursor.close() #fechar conexão com o banco
+    return False
+
+def cadastrado(nome, email, senha):
+    #conectando ao banco
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+     #executando comando de inserção
+    cursor.execute('INSERT INTO usuario(nome, senha, email) VALUES (% s, % s, % s)', (nome, senha, email, )) 
+    mysql.connection.commit() #gravando a informação no banco
+    cursor.close()
     
+def login(email,senha):
+    #Conectando ao banco
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    #Verificando cadastro pelo e-mail e senha
+    cursor.execute('SELECT * FROM usuario WHERE email = % s AND senha = % s', (email, senha, )) 
+    account = cursor.fetchone()  #Capturando o primeiro resultado
+    if account: # se existir
+        #criando sessões 
+        session['loggedin'] = True
+        session['id'] = account['id_usuario'] 
+        session['nome'] = account['nome']
+        session['email'] = account['email']
+        session['senha'] = account['senha']
+        cursor.close() #fechando conexão            
+        return True
+    cursor.close() #fechando conexão      
+    return False    
+
+def alterarEmail(emailSession, emailAtual, emailNovo):
+    #Conectando ao banco
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if emailSession == emailAtual : #verificando se o e-mail da conta em uso é o mesmo que foi digitado               
+        cursor.execute('UPDATE usuario SET email = % s WHERE email= % s',(emailNovo, emailAtual))
+        mysql.connection.commit() #Registra o Update
+        session['email'] = emailNovo  #atualizando a sessão        
+        cursor.close() #fechando conexão
+        return True
+    else:
+        cursor.close()
+        return False
+
+def alteraSenha(emailSession,  emailSenha, senhaSession, senhaAtual, senhaNova):
+    if emailSession == emailSenha and senhaSession == senhaAtual: #verificando se o e-mail e a senha da conta em são os mesmos que foram digiados
+        if validacaoSenha(senhaNova) == False:
+            return False
+        #Conectando ao banco
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND senha = % s',(senhaNova, emailSenha, senhaAtual, ))
+        mysql.connection.commit() #Registra o Update
+        session['senha'] = senhaNova #atualizando a sessão
+        cursor.close() #fechando conexão
+        return True
+    return False
+
+def deletar(emailSession, email, senhaSession, senha):
+    if emailSession == email and senhaSession == senha: #verificando se o e-mail e a senha da conta em são os mesmos que foram digiados
+        #Conectando ao banco
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        #exluindo registro 
+        cursor.execute('DELETE FROM usuario WHERE email = % s AND senha  = % s',(email, senha, ))
+        mysql.connection.commit() #Registra o DELETE
+        cursor.close() #fechando conexão
+        #finalizando sessão
+        session.pop('loggedin', None) 
+        session.pop('id', None) 
+        session.pop('nome', None)
+        session.pop('email', None)
+        session.pop('senha', None)
+        return True
+    return False
+
+def historico():
+    #Conectando ao banco
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    id_usuario = session.get('id')
+    cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s ORDER BY data_analise desc',(id_usuario, ))
+    resultado = cursor.fetchall()
+    cursor.close() #fechar conexão com o banco
+    return  render_template("historico.html", resultado = resultado, usuario=session.get('nome'))
