@@ -1,15 +1,27 @@
-
 from flask import Flask, render_template, session, request, redirect, url_for
 # render_template renderizar html,
 # session criar sessão
 # request serve para a função saber se vai usar o método get ou post
 # redirect vai verificar se a sessão é válida
 # urk_for chama as funções definidas
-import re #expressão regular
+
+#imports das valicações de campos
+from validacao import idioma
+from validacao import validacaoSenha
+from validacao import validaçãoNome
+
+#imports para os comando do banco de dados
+from bd import verificaCadastro
+from bd import cadastrado
+from bd import loginBD
+from bd import alterarEmail
+from bd import alteraSenha
+from bd import deletar
+from bd import historicoBD
+
 
 import pickle
-#import para detecção da lígua do texto
-from langdetect import detect 
+
 #importe para retirar a acentuação das palavras
 # usar antes pip install unidecode
 import unidecode 
@@ -85,7 +97,7 @@ def login():
         #criando variáveis pelo form 
         email = request.form['emailLogin'] 
         senha = request.form['senhaLogin']
-        if login(email, senha):
+        if loginBD(email, senha):
             return redirect(url_for('home'))       
         else: 
            msg = 'E-mail/Senha não encontrados!'
@@ -153,8 +165,10 @@ def deletar():
 
 @app.route("/historico", methods=['POST', 'GET'])
 def historico():
+    
     if(session):
-        return historico()
+                     
+            return  render_template("historico.html", resultado = historicoBD(), usuario=session.get('nome'))
     return render_template("home.html")
 
 
@@ -236,119 +250,6 @@ def predicao(text):
     predicao = 'FAKE' if model.predict(preprocessando_vect) == 'fake' else 'TRUE'
     return predicao  
 
-#identificando a lingua e só permitindo texto em língua portuguesa
-def idioma(texto):
-    analise = detect(texto)
-    result = analise
-    if result != 'pt':
-        return True
-    return False      
-
-#Verifica se atendo todos os requisitor(letras maiúsculas e minúsculas, tenha números e pelo menos 8 caracteres)
-def validacaoSenha(senha):
-    if not re.match("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])", senha):    
-        return False    
-    elif  len(senha) <8:
-       return False
-    return True  
-
-#Não permite nome que tenha números 
-def validaçãoNome(nome):
-    if re.match(r'[0-9]+', nome):
-        return False
-    return True    
 
 
 
-################## FUNÇÕES PARA COMANDO NO BANCO DE DADOS
-
-
-def verificaCadastro(email):
-    #conectando ao banco
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    #verificando se usuário já existe
-    cursor.execute('SELECT * FROM usuario WHERE email = % s', (email, ))
-    account = cursor.fetchone() #guarda resultado encontrado
-    if account: #caso já exista o cadastro do e-mail
-        cursor.close() #fechar conexão com o banco
-        return True
-    cursor.close() #fechar conexão com o banco
-    return False
-
-def cadastrado(nome, email, senha):
-    #conectando ao banco
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-     #executando comando de inserção
-    cursor.execute('INSERT INTO usuario(nome, senha, email) VALUES (% s, % s, % s)', (nome, senha, email, )) 
-    mysql.connection.commit() #gravando a informação no banco
-    cursor.close()
-    
-def login(email,senha):
-    #Conectando ao banco
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    #Verificando cadastro pelo e-mail e senha
-    cursor.execute('SELECT * FROM usuario WHERE email = % s AND senha = % s', (email, senha, )) 
-    account = cursor.fetchone()  #Capturando o primeiro resultado
-    if account: # se existir
-        #criando sessões 
-        session['loggedin'] = True
-        session['id'] = account['id_usuario'] 
-        session['nome'] = account['nome']
-        session['email'] = account['email']
-        session['senha'] = account['senha']
-        cursor.close() #fechando conexão            
-        return True
-    cursor.close() #fechando conexão      
-    return False    
-
-def alterarEmail(emailSession, emailAtual, emailNovo):
-    #Conectando ao banco
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    if emailSession == emailAtual : #verificando se o e-mail da conta em uso é o mesmo que foi digitado               
-        cursor.execute('UPDATE usuario SET email = % s WHERE email= % s',(emailNovo, emailAtual))
-        mysql.connection.commit() #Registra o Update
-        session['email'] = emailNovo  #atualizando a sessão        
-        cursor.close() #fechando conexão
-        return True
-    else:
-        cursor.close()
-        return False
-
-def alteraSenha(emailSession,  emailSenha, senhaSession, senhaAtual, senhaNova):
-    if emailSession == emailSenha and senhaSession == senhaAtual: #verificando se o e-mail e a senha da conta em são os mesmos que foram digiados
-        if validacaoSenha(senhaNova) == False:
-            return False
-        #Conectando ao banco
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('UPDATE usuario SET senha = % s WHERE email= % s AND senha = % s',(senhaNova, emailSenha, senhaAtual, ))
-        mysql.connection.commit() #Registra o Update
-        session['senha'] = senhaNova #atualizando a sessão
-        cursor.close() #fechando conexão
-        return True
-    return False
-
-def deletar(emailSession, email, senhaSession, senha):
-    if emailSession == email and senhaSession == senha: #verificando se o e-mail e a senha da conta em são os mesmos que foram digiados
-        #Conectando ao banco
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        #exluindo registro 
-        cursor.execute('DELETE FROM usuario WHERE email = % s AND senha  = % s',(email, senha, ))
-        mysql.connection.commit() #Registra o DELETE
-        cursor.close() #fechando conexão
-        #finalizando sessão
-        session.pop('loggedin', None) 
-        session.pop('id', None) 
-        session.pop('nome', None)
-        session.pop('email', None)
-        session.pop('senha', None)
-        return True
-    return False
-
-def historico():
-    #Conectando ao banco
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    id_usuario = session.get('id')
-    cursor.execute('SELECT noticia, resultado, data_analise FROM noticia WHERE id_usuario = % s ORDER BY data_analise desc',(id_usuario, ))
-    resultado = cursor.fetchall()
-    cursor.close() #fechar conexão com o banco
-    return  render_template("historico.html", resultado = resultado, usuario=session.get('nome'))
