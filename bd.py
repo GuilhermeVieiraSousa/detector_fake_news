@@ -109,4 +109,12 @@ def historicoBD():
     cursor.close() #fechar conexão com o banco
     return  resultado
 
+def salvandoNoticia(noticia, previsao):
+    #Conectando ao banco
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    #Salvando no banco
+    cursor.execute('INSERT INTO noticia(id_usuario, noticia, resultado) VALUES (% s, % s, % s) ORDER BY data_analise desc', (session.get('id'), noticia, previsao, )) 
+    mysql.connection.commit() #gravando a informação no banco     
+    cursor.close() #fechar conexão com o banco
+
  

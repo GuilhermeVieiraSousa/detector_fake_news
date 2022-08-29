@@ -18,28 +18,25 @@ from bd import alterarEmail
 from bd import alteraSenha
 from bd import deletar
 from bd import historicoBD
+from bd import salvandoNoticia
+
+#importe para predicao
+from predicao import predicao
+from predicao import WordsEmbeddings
 
 
-import pickle
 
-#importe para retirar a acentuação das palavras
-# usar antes pip install unidecode
-import unidecode 
+
+
+
 #Conexão ao banco
 from flask_mysqldb import MySQL 
 import MySQLdb.cursors 
 
-#import para tratamento de dados
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
+
 
 app = Flask(__name__)
  
-#download stopwords
-nltk.download("stopwords")
-
-stopwords = set(stopwords.words('portuguese'))
 
 #dados do banco
 app.config['MYSQL_HOST'] = 'localhost'
@@ -50,10 +47,6 @@ app.config['MYSQL_DB'] = 'detectorFakeNews'
 app.secret_key = 'criar_Uma_Chave'
 
 
-# Load model and vectorizer
-model = pickle.load(open('model2.pkl', 'rb'))
-tfidfvect = pickle.load(open('tfidfvect2.pkl', 'rb'))
-ps = PorterStemmer()
 
 
 mysql = MySQL(app)
@@ -226,29 +219,16 @@ def analisando():
     # Fazendo previsão do texto 
     previsao = predicao(noticia)
 
-    #Conectando ao banco
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    #Salvando no banco
-    cursor.execute('INSERT INTO noticia(id_usuario, noticia, resultado) VALUES (% s, % s, % s) ORDER BY data_analise desc', (session.get('id'), noticia, previsao, )) 
-    mysql.connection.commit() #gravando a informação no banco     
-    cursor.close() #fechar conexão com o banco
+    #Salvando notícia no BD
+    salvandoNoticia(noticia, previsao)
+
+   
    
     return render_template('home.html', msg=previsao, usuario=session.get('nome'))
 
-################ Funções para validação de campos
 
-#preprpocessamento e predição do texto
-def predicao(text):
-    portugues = nltk.corpus.stopwords.words('portuguese')
-    preprocessando = unidecode.unidecode(text) 
-    preprocessando = re.sub('[^a-zA-Z]', ' ', preprocessando) # Se tiver algo diferente de palavras, ele ira preencher com espaco em branco
-    preprocessando = preprocessando.lower() # deixando tudo em minúcuslo
-    preprocessando = preprocessando.split() # Separa a frase em uma lista de sentencas. 
-    preprocessando = [ps.stem(word) for word in preprocessando if not word in portugues ] # retirando stopwords
-    preprocessando = ' '.join(preprocessando) # deixando novamente em frases
-    preprocessando_vect = tfidfvect.transform([preprocessando]).toarray()
-    predicao = 'FAKE' if model.predict(preprocessando_vect) == 'fake' else 'TRUE'
-    return predicao  
+
+
 
 
 
