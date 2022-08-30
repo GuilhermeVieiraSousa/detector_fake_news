@@ -217,7 +217,8 @@ def analisando():
         return render_template('home.html', msg=msg)
 
     # Fazendo previsão do texto 
-    previsao = predicao(noticia)
+   # previsao = predicao(noticia)
+    previsao = WordsEmbeddings(noticia)
 
     #Salvando notícia no BD
     salvandoNoticia(noticia, previsao)

@@ -4,6 +4,9 @@ from flask_mysqldb import MySQL
 import MySQLdb.cursors 
 #import de validação de senha
 from validacao import validacaoSenha
+#criptografia
+import hashlib
+
 
 
 app = Flask(__name__)
@@ -32,10 +35,11 @@ def verificaCadastro(email):
     return False
 
 def cadastrado(nome, email, senha):
+    senhaCriptografada = hashlib.md5(senha.encode())
     #conectando ao banco
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
      #executando comando de inserção
-    cursor.execute('INSERT INTO usuario(nome, senha, email) VALUES (% s, % s, % s)', (nome, senha, email, )) 
+    cursor.execute('INSERT INTO usuario(nome, senha, email) VALUES (% s, % s, % s)', (nome, senhaCriptografada, email, )) 
     mysql.connection.commit() #gravando a informação no banco
     cursor.close()
     
