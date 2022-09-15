@@ -10,6 +10,9 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <!--CSS do cadastro e login-->
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cadastro.css')}}"  />
+    
     <title>Detecção</title>
 </head>
 <body>
@@ -45,8 +48,36 @@
         {{msg}}
 
     {% else %} <!--Caso não tenha sessão-->
-        <a href="{{url_for('cadastro')}}"><input type="submit" value="cadastro" /></a>
-        <a href="{{url_for('login')}}"><input type="submit" value="login" /></a> 
+
+    <!--From para cadastro-->
+    <h1>Cadastro</h1>
+    <form action="{{url_for('cadastro')}}" method="POST"><br>
+        Nome: <input type="text" id ="nomeCadastro"name="nomeCadastro" required/><br>
+        E-mail: <input type="email" id="emailCadastro" name="emailCadastro" required/><br>
+        Senha: <input type="password" id="senhaCadastro" name="senhaCadastro" required pattern="[^\s]+$" title="Não é permitido espaços em branco"/><br>
+        Repita a senha: <input type="password" id="senhaCadastroNovamente" name="senhaCadastroNovamente" required pattern="[^\s]+$" title="Não é permitido espaços em branco" /><br>
+        <input type="submit" name="btnCadastro" value="Cadastrar" /><br>           
+        <script type="text/javascript" src="{{url_for('static', filename='javacript/cadastro.js')}}"></script>
+    </form>
+    <!--Javascript para aparecer as mensagens de validações-->
+    <a href="{{url_for('login')}}"><input type="submit" value="login" /></a>
+    <div id="mensagem">
+        <h3>A senha deve conter os seguintes passos:</h3>
+        <p id="minuscsula" class="invalid">A <b>letra minúscula</b> letter</p>
+        <p id="maiuscula" class="invalid">A <b>letra maiúscula</b> letter</p>
+        <p id="numero" class="invalid">A <b>número</b></p>
+        <p id="tamanho" class="invalid">Minimum <b>8 characters</b></p>
+      </div>
+    <h1>{{msg}}</h1>
+
+        <!--Form para login-->
+        <h1>Login</h1>
+        <form action="{{url_for('login')}}" method="post" >
+            E-mail: <input type="email" name="emailLogin" required/><br>
+            Senha: <input type="password" name="senhaLogin" required/><br>
+            <input type="submit" name="login" value="Logar">
+            <h1>{{msg}}</h1>
+        </form> 
         <a href="{{url_for('esqueceu_senha')}}"><input type="submit" value="Esqueceu senha" /></a> 
         
     {% endif %}

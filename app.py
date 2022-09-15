@@ -24,11 +24,6 @@ from bd import salvandoNoticia
 from predicao import predicao
 from predicao import WordsEmbeddings
 
-
-
-
-
-
 #Conexão ao banco
 from flask_mysqldb import MySQL 
 import MySQLdb.cursors 
@@ -62,11 +57,12 @@ def cadastro():
     if(session):       
        return render_template("home.html")
     elif request.method == 'POST':        
-        #criando variáveis
+        #criando variáveis e pegando valores do for
         nome = request.form['nomeCadastro']
         senha = request.form['senhaCadastro']
         senhaNovamente = request.form['senhaCadastroNovamente'] 
         email = request.form['emailCadastro']
+        #fazendo verificações dos capos digitados
         if verificaCadastro(email):
             msg="E-mail já cadastrado"
         elif validaçãoNome(nome)==False:
@@ -78,12 +74,13 @@ def cadastro():
         else: 
             cadastrado(nome, email, senha)
             msg = 'Conta registrada'          
-            return render_template('cadastro.html', msg=msg)      
-    return render_template('cadastro.html', msg=msg) 
+            return render_template('home.html', msg=msg)      
+    return render_template('home.html', msg=msg) 
     
 @app.route("/login", methods=['POST', 'GET'])
 def login():
     msg = '' 
+    #verificando se há sessão
     if(session):
        return render_template("home.html")    
     elif request.method == 'POST':
@@ -94,7 +91,7 @@ def login():
             return redirect(url_for('home'))       
         else: 
            msg = 'E-mail/Senha não encontrados!'
-    return render_template('login.html', msg=msg)
+    return render_template('home.html', msg=msg)
     
 
 @app.route("/alterarEmail", methods=['POST', 'GET'])
