@@ -10,76 +10,154 @@
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+    
     <!--CSS do cadastro e login-->
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cadastro.css')}}"  />
     
     <title>Detecção</title>
 </head>
-<body>
 
+<header>
+  <table>
+
+      <tr> <!--CABEÇALHO-->
+        <div class="p-3 mb-1 bg-primary text-white" style="text-align: center;" >
+          <font size=100px id="cabeca" >FAKE NEWS</font>
+          <p>Detector</p>
+      </tr>
+      
+      <tr><!--NAV BAR-->
+        
+      {% if session['id']  %}
+
+      <nav class="navbar navbar-expand-lg navbar-dark bg-primary" >
+        <div class="container-fluid" >
+            <a class="navbar-brand" href="{{url_for('home')}}">HOME</a>
+            
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="{{url_for('historico')}}" >Detecção de notícia</a>
+              </li>
+              
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                 {{usuario}}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="{{url_for('alterar_email')}}">Alterar E-mail</a></li>
+                  <li><a class="dropdown-item" href="{{url_for('alterar_senha')}}">Alterar senha</a></li>
+                  <li><a class="dropdown-item" href="{{url_for('deletar')}}">Deletar</a></li>
+                </ul>
+              </li>
     
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('historico')}}">Historico</a>
+              </li>
+              
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('sair_sessao')}}">Sair</a>
+              </li>
+              
+              
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      </tr>
+      {% endif %}
+  </table>
+</header>
+
+<body>
+    
+
+
     <!--caso já exista sessão-->
     {% if session['id']  %}
 
-    <ul class="nav nav-tabs " id="myTab" role="tablist">
-        <li class="nav-item">
-          <a class="nav-link active" id="home-tab" href="{{url_for('historico')}}" role="tab" aria-controls="home" aria-selected="true">Detecção de notícia</a> 
-        </li>
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{usuario}}</a>
-            <div class="dropdown-menu">
-              <a class="dropdown-item" href="{{url_for('alterar_email')}}">Alterar E-mail</a>
-              <a class="dropdown-item" href="{{url_for('alterar_senha')}}">Alterar senha</a>
-              <a class="dropdown-item" href="{{url_for('deletar')}}">Deletar</a>
-        <li class="nav-item">
-           
-                <a class="nav-link" type="submit" id="contact-tab"  href="{{url_for('historico')}}" role="tab" aria-controls="contact" aria-selected="false">Histórico</a>
-            
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="contact-tab"  href="{{url_for('sair_sessao')}}" role="tab" aria-controls="contact" aria-selected="false">Sair</a>
-          </li>
-    </ul>
 
-        <form action="{{url_for('analisando')}}" method="POST">
-            <textarea name="areaNoticia"  required></textarea><br>
+    <div class="card" style="margin: 35px;">
+        <div class="card-header" style="text-align: center;">
+          Detectar Noticia
+        </div>
+        <div class="card-body">
+          <form action="{{url_for('analisando')}}" method="POST">
+            <textarea style=" width: 100%;
+            height: 150px;
+            padding: 12px 20px;
+            box-sizing: border-box;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+            resize: none;" name="areaNoticia"  required></textarea><br>
             <input type="submit" name="analisar" ></input>           
         </form>
+        </div>
+      </div>
+
         {{msg}}
 
     {% else %} <!--Caso não tenha sessão-->
 
     <!--From para cadastro-->
-    <h1>Cadastro</h1>
-    <form action="{{url_for('cadastro')}}" method="POST"><br>
-        Nome: <input type="text" id ="nomeCadastro"name="nomeCadastro" required/><br>
-        E-mail: <input type="email" id="emailCadastro" name="emailCadastro" required/><br>
-        Senha: <input type="password" id="senhaCadastro" name="senhaCadastro" required pattern="[^\s]+$" title="Não é permitido espaços em branco"/><br>
-        Repita a senha: <input type="password" id="senhaCadastroNovamente" name="senhaCadastroNovamente" required pattern="[^\s]+$" title="Não é permitido espaços em branco" /><br>
-        <input type="submit" name="btnCadastro" value="Cadastrar" /><br>           
-        <script type="text/javascript" src="{{url_for('static', filename='javacript/cadastro.js')}}"></script>
-    </form>
-    <!--Javascript para aparecer as mensagens de validações-->
-    <a href="{{url_for('login')}}"><input type="submit" value="login" /></a>
-    <div id="mensagem">
-        <h3>A senha deve conter os seguintes passos:</h3>
-        <p id="minuscsula" class="invalid">A <b>letra minúscula</b> letter</p>
-        <p id="maiuscula" class="invalid">A <b>letra maiúscula</b> letter</p>
-        <p id="numero" class="invalid">A <b>número</b></p>
-        <p id="tamanho" class="invalid">Minimum <b>8 characters</b></p>
-      </div>
-    <h1>{{msg}}</h1>
 
-        <!--Form para login-->
-        <h1>Login</h1>
+    <div class="col d-flex justify-content-center ">
+      <div class="card" style="margin-right: 3%; margin-top: 10%;">
+        <div class="card-header" style="text-align: center; background-color:#4285F4
+        ">
+        Cadastro
+        </div>
+        <div class="card-body">
+          <form action="{{url_for('cadastro')}}" method="POST"><br>
+            Nome: <input type="text" id ="nomeCadastro"name="nomeCadastro" required/><br>
+            E-mail: <input type="email" id="emailCadastro" name="emailCadastro" required/><br>
+            Senha: <input type="password" id="senhaCadastro" name="senhaCadastro" required pattern="[^\s]+$" title="Não é permitido espaços em branco"/><br>
+            Repita a senha: <input type="password" id="senhaCadastroNovamente" name="senhaCadastroNovamente" required pattern="[^\s]+$" title="Não é permitido espaços em branco" /><br>
+            
+            <!--Javascript para aparecer as mensagens de validações-->
+            <div id="mensagem">
+                <h3>A senha deve conter os seguintes passos:</h3>
+                <p id="minuscsula" class="invalid">A <b>letra minúscula</b> letter</p>
+                <p id="maiuscula" class="invalid">A <b>letra maiúscula</b> letter</p>
+                <p id="numero" class="invalid">A <b>número</b></p>
+                <p id="tamanho" class="invalid">Minimum <b>8 characters</b></p>
+            </div>
+            
+            <input type="submit" value="Cadastrar" /><br>           
+            <script type="text/javascript" src="{{url_for('static', filename='javacript/cadastro.js')}}"></script>
+        </form>
+        
+        <script>
+          alert("{{msg}}");
+        </script>
+
+        </div>
+      </div>
+    
+      <div class="card" style="margin-right: 3%; margin-top: 10%;">
+        <div class="card-header" style="text-align: center; background-color:#4285F4
+        ">
+          Login
+          </div>
+        <div class="card-body">
+          
+          <!--Form para login-->
+ 
         <form action="{{url_for('login')}}" method="post" >
             E-mail: <input type="email" name="emailLogin" required/><br>
             Senha: <input type="password" name="senhaLogin" required/><br>
             <input type="submit" name="login" value="Logar">
-            <h1>{{msg}}</h1>
+
         </form> 
-        <a href="{{url_for('esqueceu_senha')}}"><input type="submit" value="Esqueceu senha" /></a> 
-        
+        <a href="{{url_for('esqueceu_senha')}}"><input type="submit" value="Esqueceu senha" /></a>  
+        </form>
+        </div>
+      </div>
+    </div>
     {% endif %}
 </body>
+
 </html>

@@ -1,45 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!--Booststrap-->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <!--Booststrap-->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+  
+  <!--CSS do cadastro e login-->
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cadastro.css')}}"  />
 
     <title>Alterar</title>
 </head>
+
+<header>
+  <table>
+
+      <tr> <!--CABEÇALHO-->
+        <div class="p-3 mb-1 bg-primary text-white" style="text-align: center;" >
+          <font size=100px id="cabeca" >FAKE NEWS</font>
+          <p>Detector</p>
+      </tr>
+      
+      <tr><!--NAV BAR-->
+        
+      {% if session['id']  %}
+
+      <nav class="navbar navbar-expand-lg navbar-dark bg-primary" >
+        <div class="container-fluid" >
+            <a class="navbar-brand" href="{{url_for('home')}}">HOME</a>
+            
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="{{url_for('historico')}}" >Detecção de notícia</a>
+              </li>
+              
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                 {{usuario}}
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="{{url_for('alterar_email')}}">Alterar E-mail</a></li>
+                  <li><a class="dropdown-item" href="{{url_for('alterar_senha')}}">Alterar senha</a></li>
+                  <li><a class="dropdown-item" href="{{url_for('deletar')}}">Deletar</a></li>
+                </ul>
+              </li>
+    
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('historico')}}">Historico</a>
+              </li>
+              
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('sair_sessao')}}">Sair</a>
+              </li>
+              
+              
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      </tr>
+      {% endif %}
+  </table>
+</header>
+
 <body>
+  
+  <div class="col d-flex justify-content-center ">
+    <div class="card" style="margin-right: 3%; margin-top: 10%;">
+      <div class="card-header" style="text-align: center; background-color:#4285F4
+      ">
+      Alterar Email
+      </div>
+      <div class="card-body">
+        <form method="post">
+          Digite o e-mail atual:<input type="email" name="emailAntigo" required/><br>
+          Digite o e-mail novo:<input type="email" name="emailNovo" required/><br>
+          <input type="submit" name="emailAlterado" value="Alterar e-mail" /><br>    
+        </form>
+        <h1>{{msg}}</h1>
 
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <li class="nav-item">
-          <a class="nav-link " id="home-tab" href="{{url_for('home')}}" role="tab" aria-controls="home" aria-selected="true">Detecção de notícia</a> 
-        </li>
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle active" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{usuario}}</a>
-            <div class="dropdown-menu">
-              <a class="dropdown-item" href="{{url_for('alterar_email')}}">Alterar E-mail</a>
-              <a class="dropdown-item" href="{{url_for('alterar_senha')}}">Alterar senha</a>
-              <a class="dropdown-item" href="{{url_for('deletar')}}">Deletar</a>
-        <li class="nav-item">
-          <a class="nav-link " id="contact-tab"  href="{{url_for('historico')}}" role="tab" aria-controls="contact" aria-selected="false">Histórico</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link " id="contact-tab"  href="{{url_for('sair_sessao')}}" role="tab" aria-controls="contact" aria-selected="false">Sair</a>
-          </li>
-    </ul>
-     
-
-    <form method="post">
-        Alterar e-mail<br>
-        Digite o e-mail atual:<input type="email" name="emailAntigo" required/><br>
-        Digite o e-mail novo:<input type="email" name="emailNovo" required/><br>
-        <input type="submit" name="emailAlterado" value="Alterar e-mail" /><br>    
-    </form>
-    <h1>{{msg}}</h1>
+      </div>
+    </div>
+  
+  
+  
 </body>
 </html>

@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -14,8 +13,6 @@
   
   <!--CSS do cadastro e login-->
   <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cadastro.css')}}"  />
-
-    <title>Deletar</title>
 </head>
 
 <header>
@@ -75,24 +72,63 @@
 
   <div class="col d-flex justify-content-center ">
     <div class="card" style="margin-right: 3%; margin-top: 10%;">
-      <div class="card-header" style="text-align: center; background-color:#4285F4; color: white;">
-      Deletar
+      <div class="card-header" style="text-align: center; background-color:#5085F4 ;">
+      Cadastro
       </div>
-      <div class="card-body">
-        
-        <form ction="{{url_for('deletar')}}" method="post">
-          Digite o e-mail:<input type="email" name="emailDel" />
-          Digite a senha: <input type="password" name="senhaDel" />
-          <input type="submit" value="deletar" />
-          <a href="{{url_for('home')}}"><input type="submit" value="Voltar" /></a>
-        </form>
-      
-      <script>
-        alert("{{msg}}");
-      </script>
+      <div class="card-body" style="border-color: #5085F4;">
+        <h5 class="card-title" style="text-align: center;" >Digite seus dados</h5>
+        <form action="{{url_for('cadastro')}}" method="POST"><br>
+          Nome: <input type="text" id ="nomeCadastro"name="nomeCadastro" required/><br>
+          E-mail: <input type="email" id="emailCadastro" name="emailCadastro" required/><br>
+          Senha: <input type="password" id="senhaCadastro" name="senhaCadastro" required pattern="[^\s]+$" title="Não é permitido espaços em branco"/><br>
+          Repita a senha: <input type="password" id="senhaCadastroNovamente" name="senhaCadastroNovamente" required pattern="[^\s]+$" title="Não é permitido espaços em branco" /><br>
+          <input type="submit" name="btnCadastro" value="Cadastrar" /><br>           
+          <script type="text/javascript" src="{{url_for('static', filename='javacript/cadastro.js')}}"></script>
+      </form>
 
+      <!--Javascript para aparecer as mensagens de validações-->
+      <a href="{{url_for('login')}}"><input type="submit" value="login" /></a>
+      <div id="mensagem">
+          <h3>A senha deve conter os seguintes passos:</h3>
+          <p id="minuscsula" class="invalid">A <b>letra minúscula</b> letter</p>
+          <p id="maiuscula" class="invalid">A <b>letra maiúscula</b> letter</p>
+          <p id="numero" class="invalid">A <b>número</b></p>
+          <p id="tamanho" class="invalid">Minimum <b>8 characters</b></p>
+      </div>
+      <h1>{{msg}}</h1>
+      
       </div>
     </div>
-    
+  
+    <div class="card" style="margin-right: 3%; margin-top: 10%;">
+      <div class="card-header" style="text-align: center;">
+        Login
+      </div>
+      <div class="card-body">
+        <h5 class="card-title" style="text-align: center;" >Digite seus dados</h5>
+        <!--Form para login-->
+      <h1>Login</h1>
+      <form action="{{url_for('login')}}" method="post" >
+          E-mail: <input type="email" name="emailLogin" required/><br>
+          Senha: <input type="password" name="senhaLogin" required/><br>
+          <input type="submit" name="login" value="Logar">
+          <h1>{{msg}}</h1>
+      </form> 
+      <a href="{{url_for('esqueceu_senha')}}"><input type="submit" value="Esqueceu senha" /></a>  
+      </form>
+      </div>
+    </div>
+  </div>
+</tr>
 </body>
-</html>
+
+<footer>
+
+  <div class="p-3 mb-1 bg-primary text-white" >
+    <p>Criado por :</p>
+    <p>Mathues barnabe;
+      Guilherme Vieira:
+      Gianluca Campanna.
+    </p>
+
+</footer>
