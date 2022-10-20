@@ -23,7 +23,7 @@ from bd import salvandoNoticia
 #importe para predicao
 from predicao import predicao
 from predicao import WordsEmbeddings
-
+from predicao import tamanho
 #Conexão ao banco
 from flask_mysqldb import MySQL 
 import MySQLdb.cursors 
@@ -208,7 +208,9 @@ def analisando():
 
     # Pegando o texto dos forms
     noticia = request.form["areaNoticia"] 
-    
+    if tamanho(noticia) ==False:
+        msg='notícia com menos de 50 caracteres'
+        return render_template('home.html', msg=msg)
     if idioma(noticia):
         msg='notícia não está em língua portuguesa'
         return render_template('home.html', msg=msg)

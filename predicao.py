@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import re #expressão regular
 import pickle
+from setuptools import find_packages
 #importe para retirar a acentuação das palavras
 # usar antes pip install unidecode
 import unidecode 
@@ -32,7 +33,10 @@ ps = PorterStemmer()
 
 
 #preprpocessamento e predição do texto
-
+def tamanho(noticia):
+    if len(noticia):
+        return False
+    return True
 def predicao(text):
     portugues = nltk.corpus.stopwords.words('portuguese')
     preprocessando = unidecode.unidecode(text) 

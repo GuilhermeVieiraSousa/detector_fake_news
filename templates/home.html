@@ -11,7 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
-    
+    <script src="https://kit.fontawesome.com/yourcode.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <!--CSS do cadastro e login-->
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/cadastro.css')}}"  />
     
@@ -97,8 +98,28 @@
         </form>
         </div>
       </div>
+      {%if msg == ['fake'] %}
+        
+        <div class="card" style="margin: 35px;">
+          
+          <div style="margin: 4%; border-radius: 5px;;" >
+            A noticia é falsa
+            <i class="glyphicon glyphicon-cloud"></i>
+          </div>
+          
+        </div>
+      {%else %}
+      
+      <div class="card" style="margin: 35px;">
+          
+        <div style="margin: 4%; border-radius: 5px;;" >
+          A noticia é verdadeira
+          <i class="glyphicon glyphicon-cloud"></i>
+        </div>
+        
+      </div>
 
-        {{msg}}
+      {% endif %}
 
     {% else %} <!--Caso não tenha sessão-->
 

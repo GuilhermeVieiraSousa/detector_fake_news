@@ -90,7 +90,7 @@
             <tbody>
                 <tr>
                   {%for linhas in resultado%}
-                    {%if linhas.resultado == 'TRUE'%}           
+                    {%if linhas.resultado == "['true']"%}           
                       <th scope="row" >{{linhas.noticia}}</th>
                       <!--Colocand o o sinal de correto-->
                       <th scope="row"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
